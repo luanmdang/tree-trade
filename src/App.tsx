@@ -171,8 +171,8 @@ export default function App() {
             >
               <Menu className="w-6 h-6 dark:text-white" />
             </button>
-            <h1 className="text-xl font-bold text-[#212529] dark:text-white hidden md:block">🌲 TreeTrade</h1>
-            <h1 className="text-lg font-bold text-[#212529] dark:text-white md:hidden">🌲 TreeTrade</h1>
+            <h1 className="text-xl font-bold text-[#212529] dark:text-white hidden md:block">🌲TreeTrade</h1>
+            <h1 className="text-lg font-bold text-[#212529] dark:text-white md:hidden">🌲TreeTrade</h1>
           </div>
           
           <div className="flex items-center space-x-2 md:space-x-4">
