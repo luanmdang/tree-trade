@@ -1,5 +1,9 @@
 import { X, MessageSquare, Edit } from 'lucide-react';
 import { Listing } from '../types';
+import { useState } from 'react';
+import { ChatInbox } from './ChatInbox';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 
 interface ListingModalProps {
   listing: Listing | null;
@@ -9,12 +13,62 @@ interface ListingModalProps {
 }
 
 export function ListingModal({ listing, onClose, onDelete, onEdit }: ListingModalProps) {
+  const [showChat, setShowChat] = useState(false);
+  const { user } = useAuth();
+
   if (!listing) return null;
 
   const expiresAt = new Date(listing.expires_at);
   const now = new Date();
   const hoursRemaining = Math.max(0, Math.floor((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60)));
   const minutesRemaining = Math.max(0, Math.floor((expiresAt.getTime() - now.getTime()) / (1000 * 60)) % 60);
+
+  const handleMessageClick = async () => {
+    if (!user) {
+      alert('Please sign in to message the seller');
+      return;
+    }
+
+    if (user.id === listing.user_id) {
+      alert('You cannot message yourself');
+      return;
+    }
+
+    // Check if conversation exists
+    const { data: existingConversations, error: fetchError } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq('listing_id', listing.id)
+      .eq('buyer_id', user.id)
+      .eq('seller_id', listing.user_id);
+
+    if (fetchError) {
+      console.error('Error checking for existing conversation:', fetchError);
+      return;
+    }
+
+    if (!existingConversations || existingConversations.length === 0) {
+      // Create new conversation
+      const { error: createError } = await supabase
+        .from('conversations')
+        .insert({
+          listing_id: listing.id,
+          buyer_id: user.id,
+          seller_id: listing.user_id
+        });
+
+      if (createError) {
+        console.error('Error creating conversation:', createError);
+        return;
+      }
+    }
+
+    setShowChat(true);
+  };
+
+  if (showChat) {
+    return <ChatInbox onClose={() => setShowChat(false)} initialListingId={listing.id} />;
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
@@ -112,7 +166,10 @@ export function ListingModal({ listing, onClose, onDelete, onEdit }: ListingModa
                 </button>
               )}
               {!onEdit && !onDelete && (
-                <button className="px-6 py-2 bg-[#339af0] hover:bg-[#228be6] text-white rounded-lg transition-colors flex items-center gap-2">
+                <button 
+                  onClick={handleMessageClick}
+                  className="px-6 py-2 bg-[#339af0] hover:bg-[#228be6] text-white rounded-lg transition-colors flex items-center gap-2"
+                >
                   <MessageSquare className="w-4 h-4" />
                   Message
                 </button>
