@@ -4,13 +4,16 @@ import App from './App';
 import './index.css';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { AdminProvider } from './context/AdminContext';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <ThemeProvider>
-        <App />
-      </ThemeProvider>
+      <AdminProvider>
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
+      </AdminProvider>
     </AuthProvider>
   </StrictMode>
 );
