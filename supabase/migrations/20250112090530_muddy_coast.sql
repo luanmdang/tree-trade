@@ -17,25 +17,20 @@ DEFAULT (now() + interval '24 hours');
 
 -- Create function to clean up expired listings
 CREATE OR REPLACE FUNCTION cleanup_expired_listings()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
+RETURNS TRIGGER AS $$
 BEGIN
-  -- Delete expired listings
-  DELETE FROM listings
-  WHERE expires_at < now();
-  
-  -- Continue with the original query
-  RETURN NULL;
+  IF NEW.expires_at < NOW() THEN
+    DELETE FROM listings WHERE id = NEW.id;
+  END IF;
+  RETURN NEW;
 END;
-$$;
+$$ LANGUAGE plpgsql;
 
--- Create trigger to clean up expired listings before each select
+-- Create trigger to clean up expired listings after each update
 CREATE TRIGGER cleanup_expired_listings_trigger
-  BEFORE SELECT ON listings
-  FOR EACH STATEMENT
-  EXECUTE FUNCTION cleanup_expired_listings();
+AFTER UPDATE ON listings
+FOR EACH ROW
+EXECUTE PROCEDURE cleanup_expired_listings();
 
 -- Update existing listings to have an expiry time
 UPDATE listings
